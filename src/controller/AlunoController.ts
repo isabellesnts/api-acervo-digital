@@ -6,10 +6,10 @@ import { type Request, type Response } from "express";
 // Importa o tipo AlunoDTO para tipar os dados recebidos do front-end
 import type AlunoDTO from "../dto/AlunoDTO.js";
 
-// Define a classe AlunoController que HERDA da classe Aluno
-// Isso permite que o controller acesse diretamente os métodos estáticos do model (listarAlunos, cadastrarAluno, etc.)
+// Define a classe AlunoController
+// O controller é responsável por receber as requisições HTTP e coordenar com o model para acessar o banco
 // A arquitetura MVC separa responsabilidades: o Model cuida do banco, o Controller cuida das requisições HTTP
-class AlunoController extends Aluno {
+class AlunoController {
 
     /**
      * Lista todos os alunos.
@@ -20,15 +20,15 @@ class AlunoController extends Aluno {
     // Método estático e assíncrono — recebe a requisição HTTP e devolve a resposta com todos os alunos
     static async todos(req: Request, res: Response) {
         try {
-            // Chama o método herdado do model Aluno para buscar todos os alunos ativos no banco
+            // Chama o método do model Aluno para buscar todos os alunos ativos no banco
             const listaDeAlunos = await Aluno.listarAlunos();
             // Retorna a lista em formato JSON com status HTTP 200 (OK — requisição bem-sucedida)
-            res.status(200).json(listaDeAlunos);
+            return res.status(200).json(listaDeAlunos);
         } catch (error) {
             // Se ocorrer qualquer erro, exibe os detalhes no console do servidor para facilitar o debug
-            console.log(`Erro ao acessar método herdado: ${error}`);
+            console.log(`Erro ao acessar método do model: ${error}`);
             // Retorna uma mensagem de erro em JSON com status HTTP 500 (Internal Server Error)
-            res.status(500).json("Erro ao recuperar as informações do aluno.");
+            return res.status(500).json("Erro ao recuperar as informações do aluno.");
         }
     }
 
@@ -48,12 +48,12 @@ class AlunoController extends Aluno {
             // Chama o método do model passando o ID para buscar o aluno específico no banco
             const aluno = await Aluno.listarAluno(idAluno);
             // Retorna o objeto do aluno em JSON com status HTTP 200 (OK)
-            res.status(200).json(aluno);
+            return res.status(200).json(aluno);
         } catch (error) {
             // Exibe o erro no console do servidor
-            console.log(`Erro ao acessar método herdado: ${error}`);
+            console.log(`Erro ao acessar método do model: ${error}`);
             // Retorna mensagem de erro com status HTTP 500
-            res.status(500).json("Erro ao recuperar as informações do aluno.");
+            return res.status(500).json("Erro ao recuperar as informações do aluno.");
         }
     }
 
@@ -66,12 +66,7 @@ class AlunoController extends Aluno {
     // Método que recebe os dados do front-end e cria um novo aluno no banco de dados
     static async cadastrar(req: Request, res: Response) {
         try {
-            // Lê o corpo (body) da requisição HTTP e o tipifica como AlunoDTO
-            // O front-end envia os dados do novo aluno no corpo da requisição (geralmente em formato JSON)
             const dadosRecebidos: AlunoDTO = req.body;
-
-            // Cria um novo objeto Aluno usando os dados recebidos do front-end
-            // O operador "??" define valores padrão caso os campos opcionais não tenham sido enviados
             const novoAluno = new Aluno(
                 dadosRecebidos.nome,                                      // Nome obrigatório
                 dadosRecebidos.sobrenome,                                 // Sobrenome obrigatório
@@ -99,15 +94,7 @@ class AlunoController extends Aluno {
         }
     }
 
-    /**
-     * Remove um aluno.
-     * @param req Objeto de requisição HTTP com o ID do aluno a ser removido.
-     * @param res Objeto de resposta HTTP.
-     * @returns Mensagem de sucesso ou erro em formato JSON.
-     */
-    // Método que recebe um ID pela URL e realiza a remoção lógica do aluno no banco
-    // "Promise<Response>" indica que este método sempre retorna uma resposta HTTP ao final
-    static async remover(req: Request, res: Response): Promise<Response> {
+    static async remover(req: Request, res: Response) {
         try {
             // Lê o parâmetro "id" da URL e converte para número inteiro
             // Exemplo de URL: DELETE /aluno/3  →  idAluno = 3
@@ -131,15 +118,7 @@ class AlunoController extends Aluno {
         }
     }
 
-    /**
-     * Método para atualizar o cadastro de um aluno.
-     * 
-     * @param req Objeto de requisição do Express, contendo os dados atualizados do aluno
-     * @param res Objeto de resposta do Express
-     * @returns Retorna uma resposta HTTP indicando sucesso ou falha na atualização
-     */
-    // Método que recebe os novos dados do front-end e atualiza o cadastro do aluno no banco
-    static async atualizar(req: Request, res: Response): Promise<Response> {
+    static async atualizar(req: Request, res: Response) {
         try {
             // Lê o corpo da requisição e tipifica como AlunoDTO
             // O front-end envia os dados atualizados no corpo da requisição
