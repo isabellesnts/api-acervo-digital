@@ -110,18 +110,31 @@ class EmprestimoController {
             // Exemplo de URL: PUT /emprestimo/4  →  idEmprestimo = 4
             const idEmprestimo = parseInt(req.params.id as string);
 
-            // Chama o método do model passando cada campo individualmente como parâmetro
-            // Diferente do cadastrar, o atualizarEmprestimo recebe os dados separados (não um objeto Emprestimo)
-            const result = await Emprestimo.atualizarEmprestimo(
-                idEmprestimo,                              // ID do empréstimo a ser atualizado (usado no WHERE da query)
-                dadosRecebidos.aluno.id_aluno,             // Novo ID do aluno
-                dadosRecebidos.livro.id_livro,             // Novo ID do livro
-                new Date(dadosRecebidos.data_emprestimo),  // Nova data de empréstimo convertida para Date
-                // Se data_devolucao foi informada, converte para Date; senão usa a data atual como fallback
-                // ⚠️ Diferença do cadastrar: aqui usa new Date() (data atual) ao invés de undefined
-                dadosRecebidos.data_devolucao ? new Date(dadosRecebidos.data_devolucao) : new Date(),
-                dadosRecebidos.status_emprestimo ?? ""     // Novo status — usa string vazia se não informado
+            // Contrói um objeto Emprestimo para enviar ao model (na mesma forma que o cadastrar)
+            // carrega empréstimo atual para preservar campos não informados (ex: data_devolucao)
+            const emprestimoExistente = await Emprestimo.listarEmprestimo(idEmprestimo);
+            if (!emprestimoExistente) {
+                return res.status(404).json({ mensagem: 'Empréstimo não encontrado.' });
+            }
+
+            const dataDevolucaoExistente = emprestimoExistente.data_devolucao
+                ? new Date(emprestimoExistente.data_devolucao)
+                : undefined;
+
+            const dataDevolucao = dadosRecebidos.data_devolucao
+                ? new Date(dadosRecebidos.data_devolucao)
+                : dataDevolucaoExistente;
+
+            const emprestimoAtualizado = new Emprestimo(
+                dadosRecebidos.aluno.id_aluno,
+                dadosRecebidos.livro.id_livro,
+                new Date(dadosRecebidos.data_emprestimo),
+                dadosRecebidos.status_emprestimo ?? emprestimoExistente.status_emprestimo,
+                dataDevolucao
             );
+            emprestimoAtualizado.setIdEmprestimo(idEmprestimo);
+
+            const result = await Emprestimo.atualizarEmprestimo(emprestimoAtualizado);
 
             // Verifica o retorno do model: true = atualização bem-sucedida, false = falha
             if (result) {

@@ -164,6 +164,20 @@ class Aluno {
     // "async" indica que este método é assíncrono — ele pode "esperar" por operações demoradas (como banco de dados)
     // Retorna uma Promise que, quando resolvida, contém um Array de AlunoDTO ou null
 
+    // Mapeia a linha do banco para um DTO explícito e tipado.
+    private static mapRow(row: any): AlunoDTO {
+        return {
+            id_aluno: row.id_aluno,
+            ra: row.ra,
+            nome: row.nome,
+            sobrenome: row.sobrenome,
+            data_nascimento: row.data_nascimento,
+            endereco: row.endereco,
+            email: row.email,
+            celular: row.celular,
+            status_aluno: row.status_aluno
+        };
+    }
 
    /**
  * Lista todos os alunos ativos no banco de dados.
@@ -208,17 +222,7 @@ static async listarAlunos(): Promise<AlunoDTO[] | null> {
 // mas mantém a tipagem forte AlunoDTO[] no array final.
 // O banco de dados retorna um objeto genérico — não é garantido que ele seja um AlunoDTO válido.
 // Por isso, usamos "any" aqui e fazemos o mapeamento manual campo a campo.
-const listaDeAlunos: AlunoDTO[] = respostaBD.rows.map((aluno: any) => ({
-  id_aluno:        aluno.id_aluno,
-  ra:              aluno.ra,
-  nome:            aluno.nome,
-  sobrenome:       aluno.sobrenome,
-  data_nascimento: aluno.data_nascimento,
-  endereco:        aluno.endereco,
-  email:           aluno.email,
-  celular:         aluno.celular,
-  status_aluno:    aluno.status_aluno,
-}));
+const listaDeAlunos: AlunoDTO[] = respostaBD.rows.map((aluno: any) => Aluno.mapRow(aluno));
 
     // Retorna a lista de alunos montada com sucesso.
     return listaDeAlunos;
