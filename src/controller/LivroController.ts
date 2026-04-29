@@ -5,21 +5,16 @@ import { type Request, type Response } from "express";
 // Importa o tipo LivroDTO para tipar os dados recebidos do front-end
 import type LivroDTO from "../dto/LivroDTO.js";
 
-// Define a classe LivroController
-// O controller é responsável por receber as requisições HTTP e coordenar com o model para acessar o banco
-// A arquitetura MVC separa responsabilidades: o Model cuida do banco, o Controller cuida das requisições HTTP
-class LivroController {
+// Define a classe LivroController que HERDA da classe Livro
+// A herança permite acessar os métodos estáticos do model diretamente
+// O controller é responsável por receber as requisições HTTP e devolver as respostas — nunca acessa o banco diretamente
+class LivroController extends Livro {
 
-    /**
-     * Lista todos os livros.
-     * @param req Objeto de requisição HTTP.
-     * @param res Objeto de resposta HTTP.
-     * @returns Lista de livros em formato JSON.
-     */
-    // Método estático e assíncrono — recebe a requisição HTTP e devolve a resposta com todos os livros
-    static async todos(req: Request, res: Response): Promise<Response> {
+    // Método que busca todos os livros ativos e os retorna em formato JSON
+    // ⚠️ Diferença dos outros controllers: este método não tem JSDoc (comentário de documentação acima dele)
+    static async todos(req: Request, res: Response) {
         try {
-            // Chama o método do model Livro para buscar todos os livros ativos no banco
+            // Chama o método do model para buscar todos os livros com status ativo no banco
             const listaDeLivros = await Livro.listarLivros();
             // Retorna a lista em formato JSON com status HTTP 200 (OK — requisição bem-sucedida)
             return res.status(200).json(listaDeLivros);
@@ -31,14 +26,8 @@ class LivroController {
         }
     }
 
-    /**
-     * Retorna informações de um livro
-     * @param req Objeto de requisição HTTP
-     * @param res Objeto de resposta HTTP.
-     * @returns Informações de livro em formato JSON.
-     */
     // Método que busca um único livro com base no ID informado na URL (ex: GET /livro/3)
-    static async livro(req: Request, res: Response): Promise<Response> {
+    static async livro(req: Request, res: Response) {
         try {
             // Lê o parâmetro "id" da URL e converte de string para número inteiro
             const idLivro = parseInt(req.params.id as string);
@@ -56,14 +45,8 @@ class LivroController {
         }
     }
 
-    /**
-     * Cadastra um novo livro.
-     * @param req Objeto de requisição HTTP com os dados do livro.
-     * @param res Objeto de resposta HTTP.
-     * @returns Mensagem de sucesso ou erro em formato JSON.
-     */
     // Método que recebe os dados do front-end e cria um novo livro no banco de dados
-    static async cadastrar(req: Request, res: Response): Promise<Response> {
+    static async cadastrar(req: Request, res: Response) {
         try {
             // Lê o corpo da requisição HTTP e tipifica como LivroDTO
             // O front-end envia os dados do novo livro no corpo da requisição em formato JSON
@@ -90,8 +73,9 @@ class LivroController {
 
             // Verifica o retorno do model: true = cadastro bem-sucedido, false = falha
             if (result) {
-                // Retorna mensagem de sucesso com status HTTP 201 (Created — recurso criado com sucesso)
-                return res.status(201).json({ mensagem: 'Livro cadastrado com sucesso.' });
+                // ⚠️ Observação: usa status HTTP 200 (OK) ao invés de 201 (Created)
+                // O correto para criação de recursos seria 201, como fazem os outros controllers
+                return res.status(200).json({ mensagem: 'Livro cadastrado com sucesso.' });
             } else {
                 // Retorna mensagem de erro com status HTTP 500 se o banco não conseguiu salvar
                 return res.status(500).json({ mensagem: 'Não foi possível cadastrar o livro no banco de dados.' });
@@ -103,12 +87,6 @@ class LivroController {
         }
     }
 
-    /**
-     * Remove um livro.
-     * @param req Objeto de requisição HTTP com o ID do livro a ser removido.
-     * @param res Objeto de resposta HTTP.
-     * @returns Mensagem de sucesso ou erro em formato JSON.
-     */
     // Método que recebe um ID pela URL e realiza a remoção lógica do livro no banco
     // "Promise<Response>" indica que este método sempre retorna uma resposta HTTP ao final
     static async remover(req: Request, res: Response): Promise<Response> {
@@ -136,13 +114,6 @@ class LivroController {
         }
     }
 
-    /**
-     * Método para atualizar o cadastro de um livro.
-     * 
-     * @param req Objeto de requisição do Express, contendo os dados atualizados do livro
-     * @param res Objeto de resposta do Express
-     * @returns Retorna uma resposta HTTP indicando sucesso ou falha na atualização
-     */
     // Método que recebe os novos dados do front-end e atualiza o cadastro do livro no banco
     static async atualizar(req: Request, res: Response): Promise<Response> {
         try {
@@ -182,8 +153,10 @@ class LivroController {
                 // Retorna mensagem de sucesso com status HTTP 200 (OK)
                 return res.status(200).json({ mensagem: "Cadastro atualizado com sucesso!" });
             } else {
-                // Retorna mensagem de erro com status HTTP 500 se o banco não conseguiu atualizar
-                return res.status(500).json({ mensagem: "Não foi possível atualizar o livro no banco de dados." });
+                // ⚠️ Diferença dos outros controllers: usa status HTTP 400 (Bad Request) ao invés de 500
+                // 400 indica que a requisição foi malformada ou os dados são inválidos
+                // 500 indica erro interno do servidor — semanticamente, 400 pode fazer mais sentido aqui
+                return res.status(400).json({ mensagem: "Não foi possível atualizar o livro no banco de dados." });
             }
         } catch (error) {
             // Exibe o erro no console e retorna status HTTP 500 em caso de exceção inesperada

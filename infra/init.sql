@@ -34,6 +34,18 @@ CREATE TABLE IF NOT EXISTS Aluno (
     celular VARCHAR (20) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS usuario (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR (80) NOT NULL,
+    email VARCHAR (80) UNIQUE NOT NULL,
+    senha VARCHAR (80) NOT NULL,
+    role VARCHAR (20) DEFAULT 'normal'
+);
+
+INSERT INTO usuario (nome, email, senha, role)
+VALUES ('Administrador', 'admin@adigital.com.br', 'admin', 'admin')
+ON CONFLICT (email) DO NOTHING;
+
 -- Criar a função gerar_ra apenas se não existir
 CREATE OR REPLACE FUNCTION gerar_ra() RETURNS TRIGGER AS $$
 BEGIN
